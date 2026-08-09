@@ -1,0 +1,15 @@
+dataset	gene	kind	label	aa	note	frac
+Unpub_A1783V	SCN1A	point	A1783V	1783	missense DIV	0.8875062220009955
+SriHari2025	SCN1A	point	A1783V (KI)	1783	knock-in DIV	0.8875062220009955
+Happ2023	SCN1A	point	20N poison	1323	poison exon intron20	0.6585365853658537
+Haigh2021	SCN1A	promoter	1b reg	0	regulatory 1b (5')	0
+Lima&Rossi2026	SCN2A	point	R856X	856	nonsense DII (ASD16/IM5)	0.42693266832917703
+Lima&Rossi2026	SCN2A	point	E169fs	169	frameshift DI (ASD17)	0.08428927680798005
+Zhang2021	SCN2A	genewide	gene-trap	NA	homozygous gt	NA
+Deneault2018	SCN2A	genewide	CRISPR KO	NA	premature stop KO	NA
+Liao2023	SCN2A	genewide	het cohort	NA	haploinsufficiency	NA
+Tamura2025	SCN2A	genewide	Scn2a+/-	NA	haploinsufficiency	NA
+Zhang2024	SCN2A	genewide	iPSC LoF	NA	hom+het	NA
+Valassina2022	SCN1A	genewide	het+rescue	NA	haploinsuf + rescue	NA
+Voskobiynyk2021	SCN1A	genewide	het (aging)	NA	haploinsufficiency	NA
+Hawkins2024	SCN1A	genewide	het	NA	haploinsufficiency	NA
