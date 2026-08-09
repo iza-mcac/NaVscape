@@ -1,0 +1,6 @@
+﻿.Rproj.user/
+*_backup.R
+data/backup_prerename/
+data/pseudobulk_Bae2025.tsv
+.RData
+.Rhistory
