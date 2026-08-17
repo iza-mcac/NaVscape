@@ -48,8 +48,111 @@ chan_ch <- c("All","SCN1A","SCN2A")
 study_ch <- sort(unique(de_df$dataset))
 sc_ch <- names(sc_list)
 
+gt_ <- function(term, def) tags$tr(
+  tags$td(tags$b(term), style = "padding:5px 14px 5px 0;vertical-align:top;white-space:nowrap;color:#36464d;border-bottom:1px solid #f0f0f0"),
+  tags$td(def, style = "padding:5px 0;vertical-align:top;border-bottom:1px solid #f0f0f0"))
+note_ <- function(label, txt, ...) div(
+  style = "border-left:3px solid #d0d0d0;background:#f5f5f5;padding:6px 12px;margin:4px 0 8px;",
+  tags$b(label), " ", txt)
+mod_ <- function(title, body, ...) tagList(
+  tags$h5(title), tags$p(class = "just", body), ...)
+guide_css_ <- tags$style(HTML("
+  .guide-panel { font-size: 0.95rem; }
+  .guide-panel p, .guide-panel li, .guide-panel td {
+    font-size: 0.95rem; line-height: 1.5; }
+  .guide-panel > .card > .card-body > p,
+  .guide-panel p.just { text-align: justify; }
+  .guide-panel p { margin-bottom: 0.5rem; }
+  .guide-panel p.just { margin-bottom: 0.4rem; }
+  .guide-panel li { margin-bottom: 0.25rem; }
+  .guide-panel .card-header { font-size: 1.1rem; font-weight: 600; }
+  .guide-panel h5 { font-size: 1rem; font-weight: 600; margin: 1rem 0 0.35rem; }
+  .guide-panel h5:first-child { margin-top: 0; }
+"))
+
 ui <- page_navbar(
   title = "SCN1A / SCN2A Atlas", theme = bs_theme(version = 5, primary = "#207394"),
+ nav_panel("User guide", icon = icon("book-open"),
+     layout_sidebar(sidebar = sidebar(width = 260,
+    guide_css_,
+        helpText(tags$b("Notation")),
+        helpText(tags$span(style = "color:#207394", "SCN1A"), " and ",
+                 tags$span(style = "color:#CD5241", "SCN2A"), " keep the same colours throughout the application."),
+        helpText("log2FC < 0 = lower abundance in the perturbed arm."),
+        helpText("Opaque bars meet the significance threshold; translucent bars do not."),
+        hr(),
+        helpText("Full guide and data dictionary:"),
+        helpText(tags$a(href = "https://github.com/iza-mcac/SCN1A2A-Atlas", target = "_blank", "GitHub repository"))),
+
+    div(class = "guide-panel",
+
+      card(card_header("About this resource"),
+        tags$p("SCN1A2A-Atlas is a manually curated collection of functional-genomics datasets addressing ",
+               tags$b("SCN1A"), " and ", tags$b("SCN2A"), ", the paralogous genes encoding the voltage-gated sodium channels NaV1.1 and NaV1.2. Every dataset was selected through a systematic review and reprocessed from raw reads through a single quantification pipeline, so that differences between studies reflect biology and design rather than the processing convention of each laboratory."),
+        tags$p("The allele mechanism of every record was curated from the full text of the source publication, so that studies can be grouped by what was actually perturbed rather than by how the accession was labelled. Gene identifiers are resolved through one-to-one orthologue groups, so a single query returns human and mouse records together."),
+        tags$p(style = "color:#6c757d;font-size:0.9em", "18 datasets (10 SCN1A, 8 SCN2A; 8 human, 10 mouse). No programming or prior download of data is required.")),
+
+      card(card_header("Recommended workflow"),
+        tags$ol(
+          tags$li(tags$b("Define the context."), " Select organism, channel and gene in the sidebar of the module."),
+          tags$li(tags$b("Read the main panel."), " Each module below carries a note on how the plot should be interpreted."),
+          tags$li(tags$b("Verify the source."), " Consult the Datasets module for sample size, curated allele mechanism and tissue. The allele mechanism determines what a measurement at the perturbed locus can report, and no result should be interpreted without it."))),
+
+      card(card_header("Modules"),
+        mod_("Datasets \u2014 curated master table",
+          "Filters the collection by gene, organism, assay, mechanism and processing status. The gene-model map places each allele on the exon structure of the canonical transcripts, with gene-wide perturbations drawn as a track beneath the point variants.",
+          note_("Caveat:", "several records carry a curated mechanism and no differential expression results, because the deposited material did not permit reprocessing from raw reads.", "#CD5241", "#fdf3f1")),
+
+        mod_("Gene DE \u2014 gene-level differential expression",
+          "Returns the gene-level result for the selected gene across all contrasts at once. Each bar is one contrast, defined as perturbation versus the matched control arm designated by the original authors.",
+          note_("Interpretation:", "bars to the left indicate lower abundance in the perturbed arm; bars to the right, higher abundance."),
+          note_("Caveat:", "the expected result at the perturbed locus depends on the allele class. A knock-in missense allele is not expected to alter abundance, so a measured effect of zero is the correct result rather than a failed experiment. A gene trap leaves residual message, understating the functional loss. A heterozygous deletion assayed in whole brain is diluted by every cell type that does not express the gene.", "#CD5241", "#fdf3f1")),
+
+        mod_("DET \u2014 transcript-level differential expression",
+          "Resolves changes gene-level analysis does not detect, since total abundance may remain constant while the proportion between isoforms shifts. Tested with swish, which propagates inferential replicate uncertainty; transcripts the expectation-maximisation step cannot separate were grouped with Terminus into a single testable unit.",
+          note_("Interpretation:", "in the transcript-level embedding, examine whether samples sharing an allele mechanism group together.")),
+
+        mod_("t-SNE \u2014 sample-level structure",
+          "Projects all samples in two dimensions, with the colouring switchable between gene, organism, dataset and mutation.",
+          note_("Interpretation:", "begin by colouring the embedding by dataset. This module is descriptive: samples were quantified through a common pipeline, but no cross-study batch correction was applied and contrasts are never constructed across studies. Structure following the dataset annotation reflects study of origin rather than biology.")),
+
+        mod_("Single-cell \u2014 cell-type resolution",
+          "Processed droplet single-cell and single-nucleus embeddings, quantified with alevin and harmonised to a common schema with a standardised per-cell channel-expression column.",
+          note_("Interpretation:", "consult the per-type cell counts. Cell types represented by few cells do not support conclusions.")),
+
+        mod_("Studies \u2014 per-study view",
+          "The complete result of a single study, combining gene- and transcript-level volcano plots with enrichment summaries for the selected contrast."),
+
+        mod_("Pathways \u2014 processes recurring across studies",
+          "Pathways altered in more than one study, with a control for the minimum number of studies required.",
+          note_("Caveat:", "enrichment is presented as hypothesis-generating rather than as evidence of direct regulation. Recurrence does not imply the change occurred in the same direction; verify the direction per study.", "#CD5241", "#fdf3f1"))),
+
+      card(card_header("Glossary"),
+        tags$table(style = "width:100%",
+          gt_("Allele mechanism", "What was actually perturbed: gene trap, engineered protein-null, patient nonsense or frameshift, knock-in missense, poison-exon knock-in, regulatory-interval deletion, or conditional knockout. Curated from the full text of each publication."),
+          gt_("Contrast", "Perturbation versus the matched control arm designated by the original authors. Defined within a study, never across studies."),
+          gt_("DEG / DET", "Differentially expressed gene / transcript. A transcript may differ between arms while the gene-level total remains unchanged."),
+          gt_("log2FC", "Log2 of the ratio between perturbation and control. Zero indicates no change; +1 a doubling; \u22121 a halving."),
+          gt_("padj / qvalue", "The p-value adjusted for multiple testing. The conventional threshold is 0.05."),
+          gt_("Poison exon", "An exon whose inclusion introduces a premature termination codon, directing the transcript to nonsense-mediated decay rather than translation."),
+          gt_("Haploinsufficiency", "A single functional copy of the gene is insufficient for normal function."),
+          gt_("Orthologue mapping", "One-to-one correspondence between human and mouse genes, so that a query returns records from both species together."),
+          gt_("t-SNE / UMAP", "Dimensionality reduction to two dimensions. Proximity indicates similarity of profile; axis values have no biological interpretation."))),
+
+      card(card_header("Interpretation and limitations"),
+        tags$p(tags$b("Expected concordance between studies."), " Liao and colleagues perturbed SCN2A by three independent strategies in the same system and laboratory, and reported expression profiles correlating at 0.202 between the two CRISPR edits and at 0.343 and 0.335 between CRISPR interference and each edit. Two of those perturbations correspond to datasets in this collection. Concordance between studies that differ additionally in species, tissue, developmental stage and allele class should therefore be read against 0.2 to 0.35 rather than against zero, and low convergence is the expected outcome."),
+        tags$ul(
+          tags$li(tags$b("No gain-of-function perturbation is represented."), " The records model loss of function, haploinsufficiency, a hypomorphic allele and regulatory changes; no study addressing the gain-versus-loss axis deposited reprocessable raw data."),
+          tags$li(tags$b("Coverage is stated as of the search date."), " Candidate datasets were identified between 2 and 6 May 2025 and the table is re-queried at each release. Exhaustiveness is not claimed."),
+          tags$li(tags$b("Author-processed outputs were not aggregated."), " Records deposited only as count matrices are curated for mechanism but carry no differential expression results."),
+          tags$li(tags$b("The resource does not establish causality"), " and is not intended for diagnostic or therapeutic decisions."),
+          tags$li(tags$b("The resource is not a meta-analysis."), " Presenting contrasts alongside one another is not equivalent to combining them statistically."))),
+
+      card(card_header("Methods, code and citation"),
+        tags$p("Bulk reads were quantified with Salmon v1.10.9 in selective-alignment mode with Gibbs posterior sampling (100 replicates) against GENCODE v49 (human) and vM39 (mouse). Transcript-level estimates were imported with tximport and tximeta, summarised to gene level and tested with DESeq2; transcript-level testing used swish (fishpond) with Terminus grouping. Droplet single-cell and single-nucleus data were quantified with alevin. All application inputs are produced by a single reproducible build script."),
+        tags$p(tags$b("Citation: "), "[full reference]"),
+        tags$p(tags$b("Code, curated table and data dictionary: "),
+               tags$a(href = "https://github.com/iza-mcac/SCN1A2A-Atlas", target = "_blank", "github.com/iza-mcac/SCN1A2A-Atlas")))))),
 
   nav_panel("Datasets", icon = icon("table"),
     layout_sidebar(sidebar = sidebar(width = 260,
